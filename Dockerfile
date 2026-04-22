@@ -1,12 +1,12 @@
 # Stage 1: Build stage
-FROM python:3.9-slim AS builder
+FROMFROM python:3.12-slim AS builder
 
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --user --no-cache-dir -r requirements.txt
 
 # Stage 2: Final stage
-FROM python:3.9-slim
+FROM FROM python:3.12-slim
 # We use the asterisk * so it finds the latest version of curl 7 
 # without us having to guess the exact sub-version number.
 RUN apt-get update && \

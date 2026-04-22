@@ -1,12 +1,12 @@
 # Stage 1: Build stage (The Kitchen)
-FROM python:3.9-slim AS builder
+FROM FROM python:3.12-slim AS builder
 
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --user --no-cache-dir -r requirements.txt
 
 # Stage 2: Final stage (The Dining Room)
-FROM python:3.9-slim
+FROM FROM python:3.12-slim
 
 # Create the non-root user
 RUN useradd -m blessing_benedicta_bill
