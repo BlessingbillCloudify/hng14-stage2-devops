@@ -19,10 +19,12 @@ services:
           cpus: '0.2'
           memory: 50M
 
+
   # 2. The API (The Secretary)
   api:
     build: ./api
     container_name: api_service
+    restart: on-failure
     environment:
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -42,6 +44,7 @@ services:
   worker:
     build: ./worker
     container_name: worker_service
+    restart: on-failure
     environment:
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -60,6 +63,7 @@ services:
   frontend:
     build: ./frontend
     container_name: frontend_service
+    restart: on-failure
     ports:
       - "3000:3000"
     environment:
