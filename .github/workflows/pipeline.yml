@@ -38,7 +38,7 @@ jobs:
           npm run lint || echo "No lint script found, skipping."
 
       - name: Lint Dockerfiles (hadolint)
-        uses: hadolint/hadolint-action@v4.1.0
+        uses: hadolint/hadolint-action@v3.1.0
         with:
           recursive: true
       # --- TEST STAGE ---
