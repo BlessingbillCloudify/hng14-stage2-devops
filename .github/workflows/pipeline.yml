@@ -47,8 +47,8 @@ jobs:
 
       - name: Run Tests with Pytest
         run: |
-          # We need pytest-cov to generate the XML report
-          pip install pytest httpx pytest-cov
+          # We must install the app's dependencies so the tests can import them
+          pip install pytest httpx pytest-cov fastapi redis
           cd api
           pytest --cov=. --cov-report=xml
 
