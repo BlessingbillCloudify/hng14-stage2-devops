@@ -10,6 +10,8 @@ jobs:
   # This is where we will add our stages (Lint, Test, etc.)
   devops-task:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true  # <--- Add this line here
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -41,6 +43,7 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           recursive: true
+          dockerfile: "**/Dockerfile"
       # --- TEST STAGE ---
       - name: Run Tests with Pytest
         run: |
