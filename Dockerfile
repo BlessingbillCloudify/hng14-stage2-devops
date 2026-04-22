@@ -7,10 +7,13 @@ RUN pip install --user --no-cache-dir -r requirements.txt
 
 # Stage 2: Final stage
 FROM python:3.9-slim
+# We use the asterisk * so it finds the latest version of curl 7 
+# without us having to guess the exact sub-version number.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl=7.* && \
+    apt-get install -y --no-install-recommends \
+    curl=7.* && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
 
 # Use underscores instead of spaces for the username
 RUN useradd -m blessing_benedicta_bill
