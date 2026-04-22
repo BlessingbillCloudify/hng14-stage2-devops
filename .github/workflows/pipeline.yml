@@ -40,10 +40,9 @@ jobs:
           npm run lint || echo "No lint script found, skipping."
       
       - name: Lint Dockerfiles (hadolint)
-        run: |
-          docker run --rm -v $(pwd):/root -w /root hadolint/hadolint:latest-debian hadolint api/Dockerfile
-          docker run --rm -v $(pwd):/root -w /root hadolint/hadolint:latest-debian hadolint worker/Dockerfile
-          docker run --rm -v $(pwd):/root -w /root hadolint/hadolint:latest-debian hadolint frontend/Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ./Dockerfile
 
 
       # --- TEST STAGE ---
