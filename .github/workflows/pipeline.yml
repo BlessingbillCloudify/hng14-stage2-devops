@@ -45,12 +45,13 @@ jobs:
           dockerfile: ./Dockerfile
 
 
-      # --- TEST STAGE ---
       - name: Run Tests with Pytest
         run: |
-          pip install pytest httpx
+          # We need pytest-cov to generate the XML report
+          pip install pytest httpx pytest-cov
           cd api
           pytest --cov=. --cov-report=xml
+
           
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
