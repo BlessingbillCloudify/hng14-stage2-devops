@@ -9,7 +9,9 @@ RUN pip install --user --no-cache-dir -r requirements.txt
 FROM python:3.9-slim
 
 # Install curl for the HEALTHCHECK
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
 
 # Use underscores instead of spaces for the username
 RUN useradd -m blessing_benedicta_bill
