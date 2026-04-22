@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # 1. The Database (Shared notice board)
+  redis:
+    image: redis:alpine
+    container_name: redis_service
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    networks:
+      - hng_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 50M
+
+  # 2. The API (The Secretary)
+  api:
+    build: ./api
+    container_name: api_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - APP_ENV=${APP_ENV}
+    networks:
+      - hng_network
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 100M
+
+  # 3. The Worker (The Muscle)
+  worker:
+    build: ./worker
+    container_name: worker_service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - hng_network
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 150M
+
+  # 4. The Frontend (The Face)
+  frontend:
+    build: ./frontend
+    container_name: frontend_service
+    ports:
+      - "3000:3000"
+    environment:
+      - API_URL=http://api:8000
+    networks:
+      - hng_network
+    depends_on:
+      api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 100M
+
+networks:
+  hng_network:
+    driver: bridge

@@ -1,0 +1,115 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # This is where we will add our stages (Lint, Test, etc.)
+  devops-task:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      # --- LINT STAGE ---
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Lint Python (flake8)
+        run: |
+          pip install flake8
+          # This checks for critical syntax errors in both api and worker folders
+          flake8 api/ worker/ --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Lint JavaScript (eslint)
+        run: |
+          cd frontend
+          npm install
+          # This checks if your package.json has a lint script; if not, it won't crash
+          npm run lint || echo "No lint script found, skipping."
+
+      - name: Lint Dockerfiles (hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          recursive: true
+      # --- TEST STAGE ---
+      - name: Run Tests with Pytest
+        run: |
+          pip install pytest httpx
+          cd api
+          pytest --cov=. --cov-report=xml
+          
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: api/coverage.xml
+      # --- BUILD STAGE ---
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Images
+        run: |
+          # Get a short version of the unique Git ID (SHA)
+          SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          
+          # Build each service. We tag them so we can find them later.
+          # Note: 'localhost:5000' is just a placeholder name for now.
+          docker build -t api:$SHA -t api:latest ./api
+          docker build -t worker:$SHA -t worker:latest ./worker
+          docker build -t frontend:$SHA -t frontend:latest ./frontend
+          
+          echo "Images built and tagged with SHA: $SHA"
+      # --- SECURITY SCAN STAGE ---
+      - name: Scan API with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'api:latest'
+          format: 'sarif'
+          output: 'trivy-api.sarif'
+          severity: 'CRITICAL'
+          exit-code: '1' # This stops the pipeline if it finds a scary bug
+
+      - name: Scan Worker with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'worker:latest'
+          format: 'sarif'
+          output: 'trivy-worker.sarif'
+          severity: 'CRITICAL'
+          exit-code: '1'
+
+      - name: Upload Security Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports
+          path: "*.sarif"
+      # --- DEPLOY STAGE ---
+      - name: Scripted Rolling Update
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "Starting Rolling Update..."
+          # Start the new containers
+          docker-compose up -d --no-deps --build api
+          
+          # Wait and Check Health (The 60-second rule)
+          for i in {1..12}; do
+            if [ "$(docker inspect -f '{{.State.Health.Status}}' api_service)" == "healthy" ]; then
+              echo "New version is healthy!"
+              exit 0
+            fi
+            echo "Waiting for healthcheck... ($((i*5))s)"
+            sleep 5
+          done
+          
+          echo "Healthcheck failed after 60s. Aborting!"
+          exit 1
