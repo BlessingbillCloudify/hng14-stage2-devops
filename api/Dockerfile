@@ -8,7 +8,7 @@ RUN pip install --user --no-cache-dir -r requirements.txt
 # Stage 2: Final stage
 FROM python:3.12-slim
 
-# We use the asterisk * so it finds the latest version of curl 7 
+# We use the asterisk * so it finds the latest versi of curl 7 
 # without us having to guess the exact sub-version number.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
